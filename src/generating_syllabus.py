@@ -7,6 +7,8 @@ from langchain_core.prompts.chat import (
 )
 from langchain_openai import ChatOpenAI
 
+from llm_config import get_llm
+
 
 class DiscussAgent:
     def __init__(
@@ -126,7 +128,7 @@ task_specifier_template = HumanMessagePromptTemplate.from_template(
     template=task_specifier_prompt
 )
 task_specify_agent = DiscussAgent(
-    task_specifier_sys_msg, ChatOpenAI(temperature=1.0)
+    task_specifier_sys_msg, get_llm(temperature=1.0)
 )
 
 
@@ -146,9 +148,9 @@ def generate_syllabus(topic, task):
     )
 
     assistant_agent = DiscussAgent(
-        assistant_sys_msg, ChatOpenAI(temperature=0.2)
+        assistant_sys_msg, get_llm(temperature=0.2)
     )
-    user_agent = DiscussAgent(user_sys_msg, ChatOpenAI(temperature=0.2))
+    user_agent = DiscussAgent(user_sys_msg, get_llm(temperature=0.2))
 
     # Reset agents
     assistant_agent.reset()
@@ -198,7 +200,7 @@ def generate_syllabus(topic, task):
         template=summarizer_prompt
     )
     summarizer_agent = DiscussAgent(
-        summarizer_sys_msg, ChatOpenAI(temperature=1.0)
+        summarizer_sys_msg, get_llm(temperature=1.0)
     )
     summarizer_msg = summarizer_template.format_messages(
         assistant_role_name=assistant_role_name,

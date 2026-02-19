@@ -5,9 +5,8 @@ import gradio as gr
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
-
 from generating_syllabus import generate_syllabus
+from llm_config import get_llm
 from teaching_agent import teaching_agent
 
 INSTRUCTOR_SYSTEM_PROMPT = """You are an AI instructor that teaches various academic topics including machine learning, computer science, mathematics, and more.
@@ -29,7 +28,7 @@ async def api_chat(request: Request):
     """Stateless chat endpoint for red-teaming / external API access."""
     body = await request.json()
     message = body.get("message", "")
-    llm = ChatOpenAI(temperature=0.9)
+    llm = get_llm(temperature=0.9)
     response = llm.invoke([
         SystemMessage(content=INSTRUCTOR_SYSTEM_PROMPT),
         HumanMessage(content=message),

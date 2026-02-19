@@ -4,8 +4,9 @@ from langchain.chains import LLMChain
 from langchain.chains.base import Chain
 from langchain_core.language_models import BaseLLM
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 from pydantic import Field
+
+from llm_config import get_llm
 
 
 # Chain to generate the next response for the conversation
@@ -119,5 +120,5 @@ class TeachingGPT(Chain):
 
 # Set up the teaching agent
 config = dict(conversation_history=[], syllabus="", conversation_topic="")
-llm = ChatOpenAI(temperature=0.9)
+llm = get_llm(temperature=0.9)
 teaching_agent = TeachingGPT.from_llm(llm, verbose=False, **config)
