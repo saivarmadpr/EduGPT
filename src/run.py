@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -8,6 +9,9 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from generating_syllabus import generate_syllabus
 from llm_config import get_llm
 from teaching_agent import teaching_agent
+
+logger = logging.getLogger("edugpt")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 INSTRUCTOR_SYSTEM_PROMPT = """You are an AI instructor that teaches various academic topics including machine learning, computer science, mathematics, and more.
 
@@ -28,12 +32,15 @@ async def api_chat(request: Request):
     """Stateless chat endpoint for red-teaming / external API access."""
     body = await request.json()
     message = body.get("message", "")
+    logger.info("=== ATTACK PROMPT ===\n%s", message)
     llm = get_llm(temperature=0.9)
     response = llm.invoke([
         SystemMessage(content=INSTRUCTOR_SYSTEM_PROMPT),
         HumanMessage(content=message),
     ])
-    return JSONResponse({"response": response.content})
+    reply = response.content
+    logger.info("=== EDUGPT RESPONSE ===\n%s", reply[:500])
+    return JSONResponse({"response": reply})
 
 
 @app.get("/health")
