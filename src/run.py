@@ -2,27 +2,52 @@ import os
 import time
 
 import gradio as gr
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+
 from generating_syllabus import generate_syllabus
 from teaching_agent import teaching_agent
 
-# import your OpenAI key (put in your .env file)
-with open(".env", "r") as f:
-    env_file = f.readlines()
-envs_dict = {
-    key.strip("'"): value.strip("\n")
-    for key, value in [(i.split("=")) for i in env_file]
-}
-os.environ["OPENAI_API_KEY"] = envs_dict["OPENAI_API_KEY"]
+INSTRUCTOR_SYSTEM_PROMPT = """You are an AI instructor that teaches various academic topics including machine learning, computer science, mathematics, and more.
 
-with gr.Blocks() as demo:
+Your responsibilities:
+- Provide clear, comprehensive explanations of concepts
+- Use examples, analogies, and formulas where appropriate
+- Adapt your teaching style to the user's questions and level
+- Be supportive and encouraging while maintaining accuracy
+- If asked about topics outside your teaching scope, politely redirect to educational content
+
+Always respond helpfully and stay in your role as an educational instructor."""
+
+app = FastAPI()
+
+
+@app.post("/api/chat")
+async def api_chat(request: Request):
+    """Stateless chat endpoint for red-teaming / external API access."""
+    body = await request.json()
+    message = body.get("message", "")
+    llm = ChatOpenAI(temperature=0.9)
+    response = llm.invoke([
+        SystemMessage(content=INSTRUCTOR_SYSTEM_PROMPT),
+        HumanMessage(content=message),
+    ])
+    return JSONResponse({"response": response.content})
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+with gr.Blocks(title="EduGPT - AI Instructor") as demo:
     gr.Markdown("# Your AI Instructor")
     with gr.Tab("Input Your Information"):
 
         def perform_task(input_text):
-            # Perform the desired task based on the user input
-            task = (
-                "Generate a course syllabus to teach the topic: " + input_text
-            )
+            task = "Generate a course syllabus to teach the topic: " + input_text
             syllabus = generate_syllabus(input_text, task)
             teaching_agent.seed_agent(syllabus, task)
             return syllabus
@@ -33,8 +58,8 @@ with gr.Blocks() as demo:
         text_output = gr.Textbox(label="Your syllabus will be showed here:")
         text_button = gr.Button("Build the Bot!!!")
         text_button.click(perform_task, text_input, text_output)
+
     with gr.Tab("AI Instructor"):
-        #       inputbox = gr.Textbox("Input your text to build a Q&A Bot here.....")
         chatbot = gr.Chatbot()
         msg = gr.Textbox(label="What do you concern about?")
         clear = gr.Button("Clear")
@@ -55,4 +80,12 @@ with gr.Blocks() as demo:
             bot, chatbot, chatbot
         )
         clear.click(lambda: None, None, chatbot, queue=False)
-demo.queue().launch(debug=True, share=True)
+
+demo.queue()
+app = gr.mount_gradio_app(app, demo, path="/")
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 7860))
+    uvicorn.run(app, host="0.0.0.0", port=port)

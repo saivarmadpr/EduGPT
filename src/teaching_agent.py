@@ -1,20 +1,11 @@
-import os
 from typing import Any, Dict, List
 
-from langchain import LLMChain, PromptTemplate
+from langchain.chains import LLMChain
 from langchain.chains.base import Chain
-from langchain.chat_models import ChatOpenAI
-from langchain.llms import BaseLLM
-from pydantic import BaseModel, Field
-
-# import your OpenAI key (put in your .env file)
-with open(".env", "r") as f:
-    env_file = f.readlines()
-envs_dict = {
-    key.strip("'"): value.strip("\n")
-    for key, value in [(i.split("=")) for i in env_file]
-}
-os.environ["OPENAI_API_KEY"] = envs_dict["OPENAI_API_KEY"]
+from langchain_core.language_models import BaseLLM
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from pydantic import Field
 
 
 # Chain to generate the next response for the conversation
@@ -59,7 +50,7 @@ class InstructorConversationChain(LLMChain):
 
 
 # Set up the TeachingGPT Controller with the Teaching Agent
-class TeachingGPT(Chain, BaseModel):
+class TeachingGPT(Chain):
     """Controller model for the Teaching Agent."""
 
     syllabus: str = ""

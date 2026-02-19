@@ -1,20 +1,13 @@
-import os
 from typing import List
 
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts.chat import (
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
+from langchain_core.prompts.chat import (
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 )
-from langchain.schema import (
-    AIMessage,
-    BaseMessage,
-    HumanMessage,
-    SystemMessage,
-)
+from langchain_openai import ChatOpenAI
 
 
-# Define a Discuss agent class
 class DiscussAgent:
     def __init__(
         self,
@@ -41,21 +34,9 @@ class DiscussAgent:
         input_message: HumanMessage,
     ) -> AIMessage:
         messages = self.update_messages(input_message)
-
-        output_message = self.model(messages)
+        output_message = self.model.invoke(messages)
         self.update_messages(output_message)
-
         return output_message
-
-
-# import your OpenAI key (put in your .env file)
-with open(".env", "r") as f:
-    env_file = f.readlines()
-envs_dict = {
-    key.strip("'"): value.strip("\n")
-    for key, value in [(i.split("=")) for i in env_file]
-}
-os.environ["OPENAI_API_KEY"] = envs_dict["OPENAI_API_KEY"]
 
 # Set up roles
 assistant_role_name = "Instructor"
